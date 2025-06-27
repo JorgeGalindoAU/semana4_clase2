@@ -1,5 +1,5 @@
-import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 import { Router } from '@angular/router';
@@ -17,9 +17,10 @@ export class AuthService {
   private httpClient: HttpClient = inject(HttpClient);
   private router: Router = inject(Router);
 
-
   private readonly _userToken = signal<string>(localStorage.getItem('token') ?? '');
   private readonly _isUserLogged = computed(() => this._userToken() != '');
+
+  errorMessage = signal<string | null>(null);
 
   public get isUserLogged() {
     const currentToken: string = localStorage.getItem('token') ?? '';
@@ -47,7 +48,9 @@ export class AuthService {
 
           this.router.navigate(['/menu']);
         },
-        error: (err) => console.error(err)
+        error: (err: HttpErrorResponse) => {
+          this.errorMessage.set(`Error en la autenticación: ${err.message}`);
+        }
       }
     );
   }
@@ -69,7 +72,9 @@ export class AuthService {
 
           this._userToken.set(token);
         },
-        error: (err) => console.error(err)
+        error: (err: HttpErrorResponse) => {
+          this.errorMessage.set(`Error al registrar: ${err.message}`);
+        }
       }
     );
   }
